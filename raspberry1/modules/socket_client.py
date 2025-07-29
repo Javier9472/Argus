@@ -36,6 +36,10 @@ class SocketClient:
             logger.warning(f"[{self.node_id}] Socket no disponible. Reconectando...")
             self.connect()
             
+        oversized = [i for i, f in enumerate(batch_frames) if len(f) > settings.BUFFER_SIZE]
+        if oversized:
+            logger.warning(f"[{self.node_id}] {len(oversized)} frames exceden BUFFER_SIZE ({settings.BUFFER_SIZE} bytes). Índices: {oversized}")
+            
         try:
             self._send_metadata_and_data(batch_frames)
             logger.info(f"[{self.node_id}] Lote de {len(batch_frames)} frames enviado correctamente.")

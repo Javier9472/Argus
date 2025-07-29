@@ -41,7 +41,7 @@ def compress_frame_batch(frames: list[np.ndarray], quality: int = constants.MJPE
     for idx, frame in enumerate(frames):
         if not is_valid_frame (frame, idx):
             if not isinstance (frame, np.ndarray):
-               is_valid_type += 1 
+               invalid_type += 1 
             elif np.isnan (frame).any() or np.isinf (frame).any ():
                nan_inf +=1
             elif frame.size == 0:

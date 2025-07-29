@@ -6,6 +6,7 @@ from modules.camera_stream import get_camera, check_camera_stream
 from modules.video_compressor import compress_frame_batch
 from modules.socket_client import SocketClient
 from utils.logger_config import get_logger
+from queue import Empty, Full
 
 logger = get_logger("RaspberryTasks")
 
@@ -29,17 +30,34 @@ def capture_frames(queue: Queue):
                     logger.warning("[CAPTURE] Frame inválido. Saltando.")
                     continue
                 batch.append(frame)
-            queue.put(batch)
+            try:
+                queue.put(batch, timeout=1)
+            except Full:    
+                logger.warning("[CAPTURE] Buffer lleno, lote descartado.")
     except Exception as e:
         logger.exception(f"[CAPTURE] Error: {e}")
     finally:
+        try:
+            queue.put(None, timeout=1)
+        except Full:
+            logger.warning("[CAPTURE] No se pudo enviar centinela: buffer lleno.")
         cap.release()
-        logger.info("[CAPTURE] Cámara liberada.")
+        logger.info("[CAPTURE] Cámara liberada y centinela enviado.")
 
 def compress_frames(input_q: Queue, output_q: Queue):
     logger.info("[COMPRESSOR] Proceso de compresión iniciado.")
     while True:
-        batch = input_q.get()
+        try:
+            batch = input_q.get(timeout=5)
+        except Empty:
+            logger.warning("[COMPRESSOR] Cola de entrada vacía por 5s. Verificando estado...")
+            continue
+        
+        if batch is None:
+            logger.info("[COMPRESSOR] Centinela recibido. Finalizando proceso.")
+            output_q.put(None)  # Pasamos el centinela al siguiente proceso
+            break
+        
         compressed = compress_frame_batch(batch, quality=constants.MJPEG_QUALITY)
         if compressed:
             output_q.put(compressed)
@@ -50,7 +68,14 @@ def send_batches(output_q: Queue):
     client = SocketClient()
     logger.info("[SENDER] Proceso de envío iniciado.")
     while True:
-        batch = output_q.get()
+        try: 
+            batch = output_q.get(timeout=5)
+        except Empty: 
+            logger.warning("[SENDER] Cola de salida vacía por 5s. Esperando nuevos datos...")
+            continue
+        if batch is None:
+            logger.info("[SENDER] Centinela recibido. Finalizando proceso.")
+            break
         if batch:
             client.send_batch(batch)
         time.sleep(settings.SEND_INTERVAL)
@@ -76,8 +101,16 @@ def run_raspberry_node():
         p2.join()
         p3.join()
     except KeyboardInterrupt:
-        logger.info(f"[{constants.NODE_NAME}] Finalización manual detectada.")
+        logger.info(f"[{constants.NODE_NAME}] Finalización manual detectada. Enviando señales de parada...")
+
+        if p1.is_alive():
+            capture_q.put(None) 
+        if p2.is_alive():
+            compress_q.put(None) 
+        if p3.is_alive():
+            compress_q.put(None)  
+            
         for p in [p1, p2, p3]:
-            p.terminate()
             p.join()
-        logger.info(f"[{constants.NODE_NAME}] Procesos finalizados.")
+
+        logger.info(f"[{constants.NODE_NAME}] Procesos finalizados limpiamente.")

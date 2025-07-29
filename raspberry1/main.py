@@ -4,6 +4,7 @@ import multiprocessing as mp
 import time
 import sys
 import json 
+import psutil
 
 from datetime import datetime, timezone
 from config import constants, settings
@@ -82,7 +83,6 @@ def main():
         ctx.Process(target=rt.capture_frames, args=(queues["capture_to_compress"],)),
         ctx.Process(target=rt.compress_frames, args=(queues["capture_to_compress"], queues["compress_to_send"])),
         ctx.Process(target=rt.send_batches, args=(queues["compress_to_send"],)),
-        ctx.Process(target=rt.run_orchestrator)
     ]
 
     for p in processes:
