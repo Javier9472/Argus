@@ -1,4 +1,8 @@
-SERVER_IP = 'xxx.xxx.xxx.xxx'  # Reemplazar con IP real del server_node
+SERVER_IP = 'xxx.xxx.xxx.xxx' 
 SERVER_PORT = 5001
+RETRY_DELAY = 5
+MAX_DELAY = 30
+SOCKET_TIMEOUT = 10
 FRAME_RATE = 40
 SEND_INTERVAL = 1 / FRAME_RATE
+BUFFER_SIZE = 4096
