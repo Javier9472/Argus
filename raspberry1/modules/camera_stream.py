@@ -1,42 +1,27 @@
 import cv2
 import time
-import os
 from config import constants
 from utils.logger_config import get_logger
 
-logger = get_logger ("CameraStream")
+logger = get_logger("CameraStream")
 
-assert constants.GSTREAMER_PORT, "GSTREAMER_PORT no está definido"
+assert constants.CAMERA_INDEX >= 0, "CAMERA_INDEX debe estar definido y ser >= 0"
 assert constants.CAMERA_WIDTH > 0 and constants.CAMERA_HEIGHT > 0, "Resolución de cámara inválida"
 
-def build_gst_pipeline(host, port, width, height):
-
-    return (
-        f"tcpclientsrc host={host} port={port} ! "
-        f"decodebin ! videoconvert ! videoscale ! "
-        f"video/x-raw,width={width},height={height} ! appsink"
-    )
-
 def get_camera():
-
-    gst_pipeline = build_gst_pipeline(
-        host="localhost",
-        port=constants.GSTREAMER_PORT,
-        width=constants.CAMERA_WIDTH,
-        height=constants.CAMERA_HEIGHT
-    )
-
-    cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
+    cap = cv2.VideoCapture(constants.CAMERA_INDEX)
 
     if not cap.isOpened():
-        logger.error(f"[CAMERA] No se pudo abrir el stream desde libcamera-vid (puerto: {constants.GSTREAMER_PORT})")
+        logger.error(f"[CAMERA] No se pudo abrir la cámara USB (índice: {constants.CAMERA_INDEX})")
         return None
 
-    logger.info(f"[CAMERA] Cámara conectada correctamente por GStreamer (res: {constants.CAMERA_WIDTH}x{constants.CAMERA_HEIGHT})")
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, constants.CAMERA_WIDTH)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, constants.CAMERA_HEIGHT)
+
+    logger.info(f"[CAMERA] Cámara USB conectada correctamente (res: {constants.CAMERA_WIDTH}x{constants.CAMERA_HEIGHT})")
     return cap
 
 def check_camera_stream(cap, retries=3, delay=1):
-
     for attempt in range(1, retries + 1):
         try:
             ret, frame = cap.read()
