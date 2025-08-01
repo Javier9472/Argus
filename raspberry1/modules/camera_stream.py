@@ -5,18 +5,16 @@ from utils.logger_config import get_logger
 
 logger = get_logger("CameraStream")
 
-assert constants.CAMERA_INDEX >= 0, "CAMERA_INDEX debe estar definido y ser >= 0"
-assert constants.CAMERA_WIDTH > 0 and constants.CAMERA_HEIGHT > 0, "Resolución de cámara inválida"
-
 def get_camera():
     cap = cv2.VideoCapture(constants.CAMERA_INDEX)
 
     if not cap.isOpened():
-        logger.error(f"[CAMERA] No se pudo abrir la cámara USB (índice: {constants.CAMERA_INDEX})")
+        logger.error(f"[CAMERA] No se pudo abrir la cámara USB ({constants.CAMERA_INDEX})")
         return None
 
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, constants.CAMERA_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, constants.CAMERA_HEIGHT)
+    cap.set(cv2.CAP_PROP_FPS, constants.CAMERA_FPS)
 
     logger.info(f"[CAMERA] Cámara USB conectada correctamente (res: {constants.CAMERA_WIDTH}x{constants.CAMERA_HEIGHT})")
     return cap
