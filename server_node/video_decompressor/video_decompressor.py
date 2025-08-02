@@ -1,0 +1,1 @@
+# Decodifica frames MJPEG
