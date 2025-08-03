@@ -8,3 +8,4 @@ QUEUE_MAXSIZE = FRAME_BATCH_SIZE * 2
 LOG_LEVEL = "DEBUG"  
 NODE_NAME = "raspberry1"
 LOG_PATH = "logs/raspberry1.log"
+HEADER_SIZE_BYTES = 4 

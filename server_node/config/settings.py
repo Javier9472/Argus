@@ -11,8 +11,8 @@ for _p in (DATA_DIR, LOG_DIR, TMP_DIR, VIDEO_DIR):
     _p.mkdir(parents=True, exist_ok=True)
 
 # ── Puertos / IPs ────────────────────────────────────────────────
-PORTS_IN        = [5001, 6001]          
-SERVER_IP_IN    = "0.0.0.0"
+PORTS_IN        = [5001, 5002]          
+SERVER_IP_IN    = '0.0.0.0'
 
 AI_NODE_IP      = "192.168.1.200"       # <— cámbialo
 AI_NODE_PORT    = 6100
