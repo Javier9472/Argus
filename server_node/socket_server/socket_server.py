@@ -7,27 +7,22 @@ from config import settings, constants
 
 log = get_logger("SocketServer")
 
-# Cola pública: otros procesos la importarán desde aquí
 raw_batch_q = make_queue()
 
-# ── Worker de cliente ────────────────────────────────────────────
 def _client_worker(conn: socket.socket, addr: Tuple[str,int]):
     log.info(f"[{addr}] Conectado")
     conn.settimeout(settings.SOCKET_TIMEOUT)
 
     try:
         while True:
-            # 1) header length (4 bytes big-endian)
             size_bytes = _recv_exact(conn, constants.HEADER_SIZE_BYTES)
             if not size_bytes: break
             header_len = struct.unpack(">I", size_bytes)[0]
 
-            # 2) header JSON
             header_raw = _recv_exact(conn, header_len)
             if not header_raw: break
             meta = json.loads(header_raw.decode())
 
-            # 3) leer batch de frames: sabemos cuántos JPEG hay
             frames = _recv_mjpeg_batch(conn, meta["batch_size"])
             if frames is None:
                 log.warning(f"[{addr}] Desconexión inesperada")
@@ -42,7 +37,6 @@ def _client_worker(conn: socket.socket, addr: Tuple[str,int]):
         conn.close()
         log.info(f"[{addr}] Desconectado")
 
-# ── Lectura exacta ───────────────────────────────────────────────
 def _recv_exact(sock: socket.socket, n: int) -> bytes | None:
     data = b""
     while len(data) < n:
@@ -52,7 +46,6 @@ def _recv_exact(sock: socket.socket, n: int) -> bytes | None:
         data += part
     return data
 
-# ── Parseo MJPEG por marcadores SOI / EOI ────────────────────────
 def _recv_mjpeg_batch(sock: socket.socket, frames_expected: int) -> List[bytes] | None:
     buffer = bytearray()
     frames: List[bytes] = []
@@ -62,7 +55,6 @@ def _recv_mjpeg_batch(sock: socket.socket, frames_expected: int) -> List[bytes] 
             return None
         buffer.extend(chunk)
 
-        # buscar pares FF D8 ... FF D9
         while True:
             soi = buffer.find(b"\xff\xd8")
             if soi == -1: break
@@ -75,7 +67,6 @@ def _recv_mjpeg_batch(sock: socket.socket, frames_expected: int) -> List[bytes] 
                 break
     return frames
 
-# ── Listener por puerto ──────────────────────────────────────────
 def _listen_on_port(port: int):
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -93,9 +84,7 @@ def _listen_on_port(port: int):
     finally:
         srv.close()
 
-# ── API para server_tasks ────────────────────────────────────────
 def launch_socket_listeners():
-    """Lanzar un sub-proceso por puerto definido en settings.PORTS_IN."""
     listeners = []
     for p in settings.PORTS_IN:
         pr = Process(target=_listen_on_port, args=(p,), name=f"SocketPort{p}")

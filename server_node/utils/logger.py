@@ -1,4 +1,3 @@
-# server_node/utils/logger.py
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
@@ -9,7 +8,7 @@ def get_logger(name: str):
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger(name)
-    if logger.handlers:      # evita duplicados
+    if logger.handlers:     
         return logger
 
     logger.setLevel(getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO))

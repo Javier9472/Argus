@@ -7,7 +7,6 @@ class CameraBuffer:
     def __init__(self, max_frames: int) -> None:
         self._buffer: Deque[Any] = deque(maxlen=max_frames)
 
-    # ── API pública ────────────────────────────────────────────
     def push(self, frame: Any) -> None:
         self._buffer.append(frame)
 
@@ -23,7 +22,6 @@ class CameraBuffer:
     def clear(self) -> None:
         self._buffer.clear()
 
-    # ── Métodos mágicos ───────────────────────────────────────
     def __len__(self) -> int:
         return len(self._buffer)
 
@@ -34,7 +32,5 @@ class CameraBuffer:
         return f"<CameraBuffer size={len(self._buffer)} max={self._buffer.maxlen}>"
 
 
-
-# ── Factories de colas multiproceso ────────────────────────────
 def make_queue(maxsize: int | None = None) -> Queue:
     return Queue(maxsize=maxsize or 0)

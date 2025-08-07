@@ -1,4 +1,3 @@
-# server_node/main.py
 from multiTasks.server_tasks import launch_all_tasks
 from utils.logger import get_logger
 
